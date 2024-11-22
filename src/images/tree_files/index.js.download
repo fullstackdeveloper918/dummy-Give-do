@@ -1,0 +1,1030 @@
+/*
+  Element Attributes:
+    data-gtm-name: 
+    data-gtm-data-value: 
+    data-gtm-event: 'click', 'load'
+*/
+
+const BASE_DOMAIN = 'give.do' || '';
+
+function displayDataLayer() {
+  console.table(dataLayer);
+}
+
+// Function to get parameters from the query parameter from script tag 
+function getScriptParameters(scripts, key) {
+  // Checking for script in the code  
+  let thisScript = scripts.filter(function (s) {
+    return s.src && (s.src.indexOf('index.js') >= 0)
+  });
+
+  if (thisScript.length) {
+    const script = new URL(thisScript[0].src)
+    const params = new URLSearchParams(script.search)
+    if (params.has(key)) return params.get(key)
+    else return false
+  }
+  else{
+    return false
+  }
+}
+
+
+// Push values to Data Layer after checking if the object already exists with the same value or not 
+function pushToDataLayer(value) {
+  let exists = false;
+  dataLayer.forEach(function (item) {
+    if (compareValues(item, value)) {
+      exists = true;
+    }
+  })
+  if (!exists) {
+    dataLayer.push(value);
+  }
+}
+
+function getCurrentDataLayerValue(name) {
+  dataLayer.filter(function (item) { return item[name] !== undefined });
+}
+
+let DEVICE;
+try{
+  DEVICE = {
+    browser: navigator.appCodeName + '/' + navigator.appName,
+    os: navigator.oscpu,
+    os_name: navigator.platform
+  }
+}
+catch(e){
+  console.info('Analytics: Unable to fetch device details');
+}
+
+var PAGE_TYPE = '';
+var WINDOW_URL = '';
+
+// Function to check if all the elements have the required Attributes 
+function checkElementAttributes(element) {
+  if (element.hasAttribute('data-gtm-event')) {
+    let gtmEvent = element.getAttribute('data-gtm-event');
+    if (gtmEvent.toLowerCase() !== 'click' && gtmEvent.toLowerCase() !== 'load') {
+      console.error('GTM: unidentified event request received, use `click` or `load`');
+      return false;
+    }
+    else {
+      if (element.hasAttribute('data-gtm-name') &&
+        (
+          (gtmEvent.toLowerCase() === 'click' || element.hasAttribute('data-gtm-value')) ||
+          (gtmEvent.toLowerCase() !== 'click' && element.hasAttribute('data-gtm-value'))
+        )
+      ) {
+        return true;
+      }
+      else {
+        console.error('GTM: tags missing one or both of `data-gtm-name` and `data-gtm-value`');
+        return false;
+      }
+    }
+  }
+  // below code is added because material ui Button is a child of parent button HTML element, so to access that Button properties need below code
+  if (element.parentNode && element.parentNode.dataset && element.parentNode.dataset.gtmEvent) {
+    if (element.parentNode.dataset.gtmEvent.toLowerCase() !== 'click' && element.parentNode.dataset.gtmEvent.toLowerCase() !== 'load') {
+      console.error('GTM: unidentified event request received, use `click` or `load`');
+      return false;
+    }
+    else {
+      if (element.parentNode.dataset.gtmName &&
+        (
+          (element.parentNode.dataset.gtmEvent.toLowerCase() === 'click') ||
+          (element.parentNode.dataset.gtmEvent.toLowerCase() !== 'click')
+        )
+      ) {
+        return true;
+      }
+      else {
+        console.error('GTM: tags missing one or both of `data-gtm-name` and `data-gtm-value`');
+        return false;
+      }
+    }
+  }
+}
+
+
+const scripts = document.getElementsByTagName('script')
+let script = Object.keys(scripts).map(function (e) { return scripts[e] });
+// let script = Object.values(document.getElementsByTagName('script'));
+
+if (script.filter(function (s) {
+  return s.src && (s.src.indexOf('googletagmanager') >= 0) && (s.src.split('&id')[1] !== '')
+}).length > 0) {
+  console.info('Tag Manager Script Found');
+}
+else {
+
+  console.info('Tag Manager Script Not Found, Adding the script tag manually');
+
+  let GTM_TRACKING_ID
+  try {
+    GTM_TRACKING_ID = getScriptParameters(script, 'ID') ? getScriptParameters(script, 'ID').trim() : "";    
+    console.info(`Google Tag Manager container ${GTM_TRACKING_ID} injected successfully.`)
+  }
+  catch (e) {
+    console.info('Analytics: Unable to find GTM Tracking ID')
+    console.error(e)
+  }
+
+  (function (w, d, s, l, i) {
+    w[l] = w[l] || [];
+    w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s),
+      dl = l != 'dataLayer' ? '&l=' + l : '';
+    j.async = true;
+    j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+    f.parentNode.insertBefore(j, f);
+  })(window, document, 'script', 'dataLayer', GTM_TRACKING_ID);
+
+  window.dataLayer = window.dataLayer || [];
+
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+}
+
+
+const EVENT_TYPES = [
+  'checkout-pay',
+  'search',
+  'checkout-shares',
+  'campaign-donate',
+  'project-donate',
+  'campaign-donate-option-select',
+  'project-donate-option-select',
+  'campaign-donate-option-close',
+  'project-donate-option-close',
+  'project-start-campaign',
+  'login',
+  'logout',
+  'nonprofit-start-campaign',
+  'nonprofit-donate',
+  'nonprofit-donate-option-select',
+  'nonprofit-donate-option-close',
+  'ifc-start-campaign',
+  'user-profile',
+  'search-click',
+  'start-campaign-ngo-select',
+  'start-campaign-submit-details',
+  'share',
+  'fundraiser-share',
+  'page-view',
+  'page-scroll',
+  'change-donation-option',
+  'custom-donation-option',
+  'login-otp',
+  'supporting-fundraisers',
+  'select-currency',
+  'select-amount',
+  'login-request-OTP_back',
+  'redirect-checkout',
+  'create-fundraiser',
+  'select-fundraiser-landingpage',
+  'cta-landingpage',
+  'picks-activity',
+  'completes-activity',
+  'profile-pageview',
+  'good-deeds-pageview',
+];
+// More Event Categories can be added to take into account for various other requirements that might come into usage.
+
+// to add new utm paramters add it to the bottom, to maintain the logic
+const UTM_PARAMETERS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+  'referrer',
+  'referrer_domain',
+  'utm_id',
+  'initial_utm_source',
+  'utm_referral'
+]
+
+const checkValues = {
+  user: function (value) {
+    if (
+      value.hasOwnProperty('login_method') ||
+      value.hasOwnProperty('login_state') ||
+      value.hasOwnProperty('id')
+    ) {
+      return { user: value };
+    }
+    else {
+      console.error('User: invalid properties found in the passed object.');
+      return false;
+    }
+  },
+  content: function (value) {
+    // console.log(value);
+  },
+  page: function (value) {
+    if (
+      value.hasOwnProperty('url') ||
+      value.hasOwnProperty('type') ||
+      value.hasOwnProperty('project') ||
+      value.hasOwnProperty('nonprofit') ||
+      value.hasOwnProperty('campaign')
+    ) {
+      return { page: value };
+    }
+    else {
+      console.error('Page: invalid properties found in the user object.');
+      return false;
+    }
+  },
+  event: function (name, value) {
+    if (EVENT_TYPES.indexOf(value.type) >= 0 || EVENT_TYPES.indexOf(name) >= 0) {
+      
+      if (value.type) { 
+        if(value && value.data) {
+          return { interaction: { 
+            type: value.type, 
+            data: value.data
+          }}; 
+        }
+        else{
+          return { interaction: { 
+            type: value.type            
+          }}; 
+        }
+      }
+      else {
+        if(value && value.data) {
+          return { interaction: { 
+            type: name, 
+            data: value.data
+          }};
+        }
+        else {
+          return { interaction: {
+            type: name            
+          }};
+        } 
+      }
+    }
+    else {
+      if (value.type === 'donate') {
+        let url = window.location.href;
+        let event_name;
+        if (url.indexOf('nonprofits') >= 0) {
+          event_name = 'nonprofit-donate';
+        }
+        else if (url.indexOf('projects') >= 0) {
+          event_name = 'project-donate';
+        }
+        else if (url.indexOf('campaigns') >= 0 || url.indexOf('fundraisers') >= 0) {
+          event_name = 'campaign-donate';
+        }
+        else {
+          event_name = 'checkout' // To Avoid undefined value.
+        }
+
+        if (value.hasOwnProperty('data') && value.data.hasOwnProperty('transaction')) {
+          const customerData = value.data.hasOwnProperty('customer') ? value.data.customer : undefined
+          const donorInfo = value.data.hasOwnProperty('donor_info') ? value.data.donor_info : undefined
+          checkoutAddition(value.data.transaction, customerData, donorInfo);
+        }
+        else if (value.data) {
+          return { interaction: { type: event_name, data: value.data } }
+        }
+        else {
+          return { interaction: { type: event_name } }
+        }
+      }
+      else if (value.type === 'share') {
+        if (value.data) {
+          let event_name = value.data.identifier;
+          let data = value.data.medium;
+          return { interaction: { type: event_name, data: { identifier: data } } }
+        }
+      }
+      else if (value.type === 'donor-info') {
+        if (value.data) {
+          return { donor_info: { ...value.data } }
+        }
+      }
+      else {
+        console.error('Event: undefined event found' + name);
+        return false;
+      }
+    }
+  },
+  checkout: function (name, value) {
+    if (
+      value.hasOwnProperty('payment_status') ||
+      value.hasOwnProperty('donation_status') ||
+      value.hasOwnProperty('payment_id') ||
+      value.hasOwnProperty('error') ||
+      value.hasOwnProperty('form_details')
+    ) {
+      return { checkout: value };
+    }
+    else {
+      console.error('Page: invalid properties found in the user object.');
+      return false;
+    }
+  },
+  search: function (value) {
+    if (
+      value.hasOwnProperty('search_value')
+    ) {
+      return { search: value };
+    }
+    else {
+      console.error('Page: invalid properties found in the user object.');
+      return false;
+    }
+  }
+}
+
+// console.log({page_url: window.location}); // Page Url
+
+window.addEventListener('click', function (e) {
+  const _gtmElement = e.target;
+  // e.preventDefault(); //TODO: Comment the Code Out.
+
+  // Checking if Element has all attrbutes and is to be triggered at click.
+  if (checkElementAttributes(_gtmElement) && gtmData(_gtmElement, 'data-gtm-event')) {
+    let gtmDataName = gtmData(_gtmElement, 'data-gtm-name');
+    let gtmDataValue = gtmData(_gtmElement, 'data-gtm-value');
+    if (gtmDataValue === undefined) {
+      handleClick(gtmDataName);
+    }
+    else {
+      handleClick(gtmDataName, JSON.parse(gtmDataValue));
+    }
+  };
+})
+
+
+window.addEventListener('load', function (e) {
+  // Disallowing Load Event on the same page URL on re-rendering   
+  if (this.location.href !== WINDOW_URL) {
+    storeUTMParams(this.location.href)
+    dataLayer.push({ timestamp: new Date() });
+    
+    if(DEVICE) dataLayer.push({ device: DEVICE });
+    
+    let _dataGtmElements = document.querySelectorAll('[data-gtm-event]');
+    // For older browsers, if array properties can't be run for NodeList 
+    _dataGtmElements = Array.prototype.slice.call(_dataGtmElements);
+    _dataGtmElements.forEach(function (element, index) {
+      let _gtmElement = element.target ? element.target : element;
+      // Checking if Element has all attrbutes and is to be triggered at load.
+      if (checkElementAttributes(_gtmElement) && gtmData(_gtmElement, 'data-gtm-event').toLowerCase() === 'load') {
+        let gtmDataName = gtmData(_gtmElement, 'data-gtm-name');
+        let gtmDataValue = JSON.parse(gtmData(_gtmElement, 'data-gtm-value'));
+        handlePageLoad(gtmDataName, gtmDataValue);
+      }
+    })
+    WINDOW_URL = this.location.href;
+  }
+})
+
+
+window.addEventListener('domChanged', function () {
+  console.log('Changed');
+})
+
+//Below functions is used to fethc the data property of the element passed
+function gtmData(_gtmElement, type) {
+  if (_gtmElement.hasAttribute(type)) {
+    return _gtmElement.getAttribute(type)
+  } else {
+    let gtmData = null;
+    if (_gtmElement.parentNode && _gtmElement.parentNode.dataset) {
+      if (type === 'data-gtm-event' && _gtmElement.parentNode.dataset.hasOwnProperty('gtmEvent')) {
+        gtmData = _gtmElement.parentNode.dataset.gtmEvent.toLowerCase();
+      }
+      if (type === 'data-gtm-value' && _gtmElement.parentNode.dataset.hasOwnProperty('gtmValue')) {
+        gtmData = _gtmElement.parentNode.dataset.gtmValue;
+      }
+      if (type === 'data-gtm-name' && _gtmElement.parentNode.dataset.hasOwnProperty('gtmName')) {
+        gtmData = _gtmElement.parentNode.dataset.gtmName;
+      }
+    }
+    return gtmData;
+  }
+}
+
+function handleClick(name, value) {
+  if (!value) {
+    value = null;
+  }
+  let dl_value = checkValues.event(name, value);
+  if (dl_value) {
+    dl_value.event = 'user-event';
+    pushToDataLayer(dl_value);
+  }
+}
+
+// Functions to Store and Retrive data from Local Storage 
+
+function getFromLocalStorage(key, defaultValue) {
+  if (!defaultValue) { defaultValue = false; }
+  let value = window.localStorage.getItem(key)
+  if (value) {
+    const item = JSON.parse(value);
+    const now = new Date()
+    if (now.getTime() > item.expiry) {
+      deleteFromLocalStorage(key);
+    }
+    else {
+      return item.value;
+    }
+  }
+  else {
+    return defaultValue
+  }
+}
+
+function getCookie(key) {
+  var name = key + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  // console.log(name, decodedCookie, ca)
+  for (var i = 0; i < ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+function setToLocalStorage(key, value) {
+  const now = new Date()
+  const item = {
+    value: value,
+    expiry: now.getTime() + 60 * 60 * 1000
+  }
+  window.localStorage.setItem(key, JSON.stringify(item));
+}
+
+function setToCookie(key, value) {
+  var d = new Date();
+  d.setTime(d.getTime() + (60 * 60 * 1000));
+  var expires = "expires=" + d.toUTCString();
+  var domain = `domain=${BASE_DOMAIN}`
+  var secure = "secure"
+  document.cookie = key + "=" + value + ";" + expires + ";path=/" + ';' + domain + ';' + secure;
+}
+
+function deleteFromLocalStorage(key, value) {
+  window.localStorage.removeItem(key)
+}
+
+function deleteFromCookie(key) {
+  document.cookie = key + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
+function setReferral(utmSource, referrer) {
+  if (utmSource === 'direct') {
+    // Setting direct only if the referral value is not previously set.
+    if (!getCookie('utm_referral')) setToCookie('utm_referral', 'direct');
+  } else if (checkIfBelongsToSeoList(referrer)) {
+      setToCookie('utm_referral', 'seo');
+  } else {
+      setToCookie('utm_referral', 'external_referral_sites');
+  }
+}
+
+function storeUTMParams(url) {
+  try{
+    if (document) {
+      const referrerFromLocalStorage = getFromLocalStorage('referrer'); 
+      if (referrerFromLocalStorage !== '' && !referrerFromLocalStorage) {
+        setToLocalStorage('referrer', document.referrer);
+      }
+      const utmSource = document.referrer === '' || document.referrer.includes('give.do') ? 'direct' : checkIfBelongsToSeoList(document.referrer) ? 'seo' : 'external_referral_sites';
+      setReferral(utmSource, document.referrer);
+    }
+    url = url.toString()
+    let querystring = url.split('?');
+    //when utm params exists
+    if (querystring.length > 1) {
+      let pairs = querystring[1].split('&');
+      const utmKeyValuePair = {};
+      // ['utm_source=google', 'referrer=www.google.com']
+
+      for (let pairIdx in pairs) {
+        let keyValuePair = pairs[pairIdx].split("=");
+        keyValuePair[1] = keyValuePair[1].replace(/%20/g, ' ');
+        // constructing an object for availability
+        utmKeyValuePair[keyValuePair[0]] = keyValuePair[1];
+      }
+
+      for (let idx in pairs) {
+        let keyValue = pairs[idx].split("=");
+        // ['utm_source', 'google']
+        keyValue[1] = keyValue[1].replace(/%20/g, ' ');
+        // if(UTM_PARAMETERS.indexOf(keyValue[0] >= 0) && getFromLocalStorage(keyValue[0]) !== keyValue[1]){        
+        //   setToLocalStorage(keyValue[0], keyValue[1]);
+        // }
+        if (UTM_PARAMETERS.indexOf(keyValue[0] >= 0) && getCookie(keyValue[0]) !== keyValue[1]) {
+          if (keyValue[0] === UTM_PARAMETERS[0]) {
+            const referrer = utmKeyValuePair[UTM_PARAMETERS[5]];
+            // this checks if the current utm_param is utm_source and is null, referrer is '' or the key is undefined
+            if (keyValue[1] === null && ( referrer === '' || !referrer ||  referrer.includes('give.do'))) {
+              setToCookie(keyValue[0], 'direct');
+              // setting initial_utm_source cookie if it already does not exists
+              if (!getCookie('initial_utm_source')) {
+                setToCookie('initial_utm_source', 'direct');
+              }
+            // this checks if current utm_param is utm_source and referrer is in the seo list
+            } else if (keyValue[1] === null && referrer && checkIfBelongsToSeoList(referrer)) {
+              setToCookie(keyValue[0], 'seo');
+              // setting initial_utm_source cookie if it already does not exists
+              if (!getCookie('initial_utm_source')) {
+                setToCookie('initial_utm_source', 'seo');
+              }
+            // this checks if current utm_param is utm_source and referrer is not in the seo list
+            } else if (keyValue[1] === null && referrer && !checkIfBelongsToSeoList(referrer)) {
+              setToCookie(keyValue[0], 'external_referral_sites');
+              // setting initial_utm_source cookie if it already does not exists
+              if (!getCookie('initial_utm_source')) {
+                setToCookie('initial_utm_source', 'external_referral_sites');
+              }
+            } else {
+              setToCookie(keyValue[0], keyValue[1]);
+              // setting initial_utm_source cookie if it already does not exists
+              if (!getCookie('initial_utm_source')) {
+                setToCookie('initial_utm_source',  keyValue[1]);
+              }
+            }
+          } else {
+            setToCookie(keyValue[0], keyValue[1]);
+          }
+        } else {
+          // when utm params do not exist
+          if (document.referrer === '' || document.referrer.includes('give.do')) {
+            setToCookie('utm_source', 'direct');
+            // setting initial_utm_source cookie if it already does not exists
+            if (!getCookie('initial_utm_source')) {
+              setToCookie('initial_utm_source', 'direct');
+            }
+          } else if (checkIfBelongsToSeoList(document.referrer)) {
+            setToCookie('utm_source', 'seo');
+            // setting initial_utm_source cookie if it already does not exists
+            if (!getCookie('initial_utm_source')) {
+              setToCookie('initial_utm_source', 'seo');
+            }
+          } else if (!checkIfBelongsToSeoList(document.referrer)) {
+            setToCookie('utm_source', 'external_referral_sites');
+            // setting initial_utm_source cookie if it already does not exists
+            if (!getCookie('initial_utm_source')) {
+              setToCookie('initial_utm_source', 'external_referral_sites');
+            }
+          }
+        }
+      }      
+    } else {
+      // when utm params do not exist
+      if (document.referrer === '' || document.referrer.includes('give.do')) {
+        setToCookie('utm_source', 'direct');
+        // setting initial_utm_source cookie if it already does not exists
+        if (!getCookie('initial_utm_source')) {
+          setToCookie('initial_utm_source', 'direct');
+        }
+      } else if (checkIfBelongsToSeoList(document.referrer)) {
+        setToCookie('utm_source', 'seo');
+        // setting initial_utm_source cookie if it already does not exists
+        if (!getCookie('initial_utm_source')) {
+          setToCookie('initial_utm_source', 'seo');
+        }
+      } else if (!checkIfBelongsToSeoList(document.referrer)) {
+        setToCookie('utm_source', 'external_referral_sites');
+        // setting initial_utm_source cookie if it already does not exists
+        if (!getCookie('initial_utm_source')) {
+          setToCookie('initial_utm_source', 'external_referral_sites');
+        }
+      }
+    }
+  }
+  catch(e){
+    console.info('Unable to store UTM parameters in cookie; Setting default value to utm_source = direct');
+    setToCookie('utm_source', 'direct');
+    setReferral('direct', document.referrer)
+  }
+}
+
+function checkIfBelongsToSeoList (referrer) {
+  const referrerList = [
+    '360.cn',
+    'alice.com',
+    'aliceadsl.fr',
+    'alltheweb.com',
+    'altavista.com',
+    'aol.com',
+    'ask.com',
+    'search.aol.fr',
+    'alicesuche.aol.de',
+    'search.auone.jp',
+    'isearch.avg.com',
+    'search.babylon.com',
+    'baidu.com',
+    'biglobe.ne.jp',
+    'bing.com',
+    'search.centrum.cz',
+    'search.comcast.net',
+    'search.conduit.com',
+    'cnn.com/SEARCH',
+    'daum.net',
+    'duckduckgo.com',
+    'ecosia.org',
+    'ekolay.net',
+    'eniro.se',
+    'globo.com/busca',
+    'go.mail.ru',
+    'google.com',
+    'google.co', //will include .uk etc other international extensions
+    'goo.ne.jp',
+    'haosou.com/s',
+    'search.incredimail.com',
+    'kvasir.no',
+    'bing.com',
+    'lycos.com',
+    'search.lycos.de',
+    'mamma.com',
+    'msn.com',
+    'money.msn.com',
+    'local.msn.com',
+    'mynet.com',
+    'najdi.si',
+    'naver.com',
+    'search.netscape.com',
+    'szukaj.onet.pl',
+    'ozu.es',
+    'qwant.com',
+    'rakuten.co.jp',
+    'rambler.ru',
+    'search-results.com',
+    'search.smt.docomo.ne.jp',
+    'sesam.no',
+    'seznam.cz',
+    'so.com/s',
+    'sogou.com',
+    'startsiden.no/sok',
+    'szukacz.pl',
+    'buscador.terra.com.br',
+    'search.tut.by',
+    'search.ukr.net',
+    'search.virgilio.it',
+    'voila.fr',
+    'wp.pl',
+    'yahoo.com',
+    'yahoo.cn',
+    'm.yahoo.com',
+    'yandex.com',
+    'yandex.ru',
+    'yam.com'
+  ];
+  for (let referrerItem of referrerList) {
+    if (referrer.includes(referrerItem)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+function handlePageLoad(name, value) {
+  if (name === 'page') {
+    PAGE_TYPE = value.type;
+    value.url = value.url ? value.url : window.location.href;
+    let dl_value = checkValues[name](value);
+    if (dl_value) {
+      // Adding custom event name to ensure that the same could be used to fire the trigger at Google Tag Manager 
+      dl_value.event = name;
+      // To avoid data getting merges in the page object in DataLayer, adding a property _clear with value as true.
+      dl_value._clear = true;
+      pushToDataLayer(dl_value);
+    }
+  }
+}
+
+function mutationcallback(mutations, observer) {
+  let elementDetected = false;
+  mutations.forEach(function (mutation) {
+    if (mutation.type === 'childList' && !elementDetected) {
+      let _dataGtmElements = document.querySelectorAll('[data-gtm-event="load"]');
+      // For older browsers, if array properties can't be run for NodeList 
+      _dataGtmElements = Array.prototype.slice.call(_dataGtmElements);
+      try {
+        if (_dataGtmElements.length > 0) {
+          window.dispatchEvent(new Event('load'));
+          elementDetected = true;
+        }
+      }
+      catch (e) {
+        // TODO
+      }
+    }
+  })
+}
+
+// Mutation Objserver Set to Track DOM Updates (for apps using React)
+let DOMobserver = new MutationObserver(mutationcallback);
+if (document.body !== null) {
+  DOMobserver.observe(document.body, { attributes: false, childList: true, subtree: true });
+}
+
+// Append Data Layer, function that can be used in applications.
+function appendDataLayer(name, value) {
+  if (!value) { value = null; }
+  let dl_value = false;
+  if (name === 'event') {
+    dl_value = checkValues.event(name, value);
+  }
+  else {
+    dl_value = checkValues[name](value);
+  }
+
+  let exists = ifExists(name, dl_value);
+  if (!exists && dl_value) {
+    if (name === 'event') dl_value.event = 'user-event';
+    else dl_value.event = name;
+
+    if (dl_value && dl_value.hasOwnProperty('event')) {
+      dl_value._clear = true;
+      pushToDataLayer(dl_value);
+    }
+  }
+
+  const utm_parameters = getUTMParameters()
+  if (utm_parameters && Object.keys(utm_parameters).length !== 0) {
+    pushToDataLayer({
+      utm: utm_parameters,
+      _clear: true
+    })
+  }
+}
+
+// Function to clear UTM Parameters from LocalStorage
+function clearUTMParameters() {
+  try {
+    UTM_PARAMETERS.forEach(item => deleteFromCookie(item))
+  }
+  catch (e) {
+    console.error('Couldn\'t clear UTM parameters from Cookies', e);
+  }
+}
+
+// Function to get UTM Parameters from LocalStorage
+function getUTMParameters() {
+  let data = {};
+  try {
+    UTM_PARAMETERS.forEach(function (item) {
+      let value = getCookie(item);
+      //getFromLocalStorage(item);
+      if (value) {
+        data[item] = value;
+      }
+    });
+
+    if (Object.keys(data).length > 0) {
+      return data;
+    }
+    else {
+      return false;
+    }
+  }
+  catch (e) {
+    console.error('Unable to fetch UTM parameters');
+  }
+}
+
+
+function ifExists(name, dl_value) {
+  try {
+    let value = JSON.parse(JSON.stringify(dl_value));
+    let currentValues = getCurrentDataLayerValue(name);
+
+    if (currentValues !== undefined) {
+      if (value.hasOwnProperty('_clear')) delete value['_clear'];
+      if (value.hasOwnProperty('gtm.uniqueEventId')) delete value['gtm.uniqueEventId'];
+
+      currentValues.forEach(function (value) {
+        item = JSON.parse(JSON.stringify(value));
+        if (item.hasOwnProperty('_clear')) delete item['_clear'];
+        if (item.hasOwnProperty('event')) delete item['event'];
+        if (item.hasOwnProperty('gtm.uniqueEventId')) delete item['gtm.uniqueEventId'];
+
+        let exists = compareValues(item, value)
+        // console.log(exists);
+        if (exists) {
+          return true;
+        }
+      })
+      return false;
+    }
+    else {
+      return false;
+    }
+  }
+  catch (e) {
+    return false
+  }
+}
+
+function compareValues(one, two) {
+  // return (JSON.stringify(one) === JSON.stringify(two));
+  return (typeof one === 'object'
+    && typeof two === 'object'
+    && one !== null
+    && two !== null
+    && Object.keys(one).length > 0)
+    ? Object.keys(one).length === Object.keys(two).length
+    && Object.keys(one).every(function (index) {
+      return compareValues(one[index], two[index])
+    })
+    : one === two;
+}
+
+// Get values from Data Layer with key
+function getDataLayer(name) {
+  let value = dataLayer.filter(function (item) {
+    Object.keys(item).indexOf(name) >= 0
+  });
+  if (value.length) {
+    return value[0][name];
+  }
+  else {
+    console.error(name + "is not a valid dataLayer variable");
+  }
+}
+
+function checkoutAddition(value, customer = {}, donor_info = {}) {
+  let dl_value = {}
+  let products;
+  if (value.hasOwnProperty('event')) {
+    dl_value.event = value.event;
+    const user_action_info = {
+      tip_percent: value.tip_percent !== undefined ? value.tip_percent : '',
+      updated_amount_flag: value.updated_amount_flag !== undefined ? value.updated_amount_flag : false,
+      updated_tippercent_flag: value.updated_tippercent_flag !== undefined ? value.updated_tippercent_flag : false,
+      anonymous_flag: value.anonymous_flag !== undefined ? value.anonymous_flag : '',
+      viewed_faq: value.viewed_faq !== undefined ? value.viewed_faq : false,
+      tax_exemption_type: value.tax_exemption_type !== undefined ? value.tax_exemption_type : '',
+      redirection_status: value.redirection_status !== undefined ? value.redirection_status : false,
+      claim_tax: value.claimTax !== undefined ? value.claimTax : false,
+      skip_tax: value.skipTax !== undefined ? value.skipTax : false,
+      gst_claimed: value.GST_claimed !== undefined ? value.GST_claimed : false,
+      updated_gst_billing_address: value.updated_GSTbillingaddress !== undefined ? value.updated_GSTbillingaddress : false,
+      source: value.source !== undefined ? value.source : '',
+      tapped_go_back_fundraisers: value.tappedGoBackFundraisers !== undefined ? value.tappedGoBackFundraisers : false,
+      donation_status: value.donation_status !== undefined ? value.donation_status : '',
+      closed_razorpay_popup: value.closedRazorpayPopup !== undefined ? value.closedRazorpayPopup : false,
+      failure_reason: value.failure_reason !== undefined ? value.failure_reason : '',
+      revenue_type: value.revenue_type !== undefined ? value.revenue_type : '',
+      is_give_nonprofit_flag:value.is_give_nonprofit_flag !== undefined ? value.is_give_nonprofit_flag : false,
+      is_donation_inorganic:value.is_donation_inorganic !== undefined ? value.is_donation_inorganic : false,
+      is_referred_by_user:value.is_referred_by_user !== undefined ? value.is_referred_by_user : false,
+      magic_payment_link:value.magic_payment_link !== undefined ? value.magic_payment_link : ''
+    }
+    products = [{
+      id: value.id,
+      price: value.price ? value.price : 0,
+      name: value.name !== undefined ? value.name : '',
+      quantity: 1,
+      category: value.category !== undefined ? value.category : '',
+      brand: value.brand !== undefined ? value.brand : '',
+      variant: value.variant !== undefined ? value.variant : '',
+      gateway: value.gateway !== undefined ? value.gateway : ''       
+    }]
+
+    dl_value.customer = customer
+    dl_value.donor_info = donor_info
+
+    let actionField = {
+      id: value.order_id,
+      revenue: Number(value.price),
+      list: value.brand !== undefined ? value.brand : ''
+    };
+    let ecommerce = {}
+
+    dl_value.transaction = {
+      products: [
+        {
+          ...products[0],
+          ...user_action_info
+        }
+      ],
+      actionField: actionField
+    }
+
+    dl_value.event_data = {
+      currency: 'INR',
+      value: products[0].price || undefined,
+      transaction_id: value.order_id,
+      items: [{
+        item_id: products[0].id,
+        item_name: products[0].name,
+        currency: 'INR',
+        item_brand: products[0].brand,
+        item_category: products[0].category,
+        item_variant: products[0].variant,
+        price: products[0].price,
+        quantity: 1        
+      }],
+    }
+
+    if (value.event === 'productImpressions') {
+      ecommerce.impressions = {
+        products: products
+      }
+
+    }
+    else if (value.event === 'productDetail') {
+      ecommerce.detail = {
+        products: products
+      }
+    }
+    else if (value.event === 'productClick') {
+      ecommerce.click = {
+        products: products
+      }
+    }
+    else if (value.event === 'addToCart') {
+      ecommerce.add = {
+        products: products
+      }
+    }
+    else if (value.event === 'checkout') {
+      ecommerce.checkout = {
+        actionField: { ...actionField, step: 1 },
+        products: products
+      }
+    }
+    else if (value.event === 'addPaymentInfo') {
+      ecommerce.checkout = {
+        actionField: { ...actionField, step: 2, gateway: value.gateway ? value.gateway : null },
+        products: products
+      }
+    }
+    else if (value.event === 'purchase') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    else if (value.event === 'postPaymentInfo') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    else if (value.event === 'claimGst') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    else if (value.event === 'shareCampaign') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    else if (value.event === 'tappedGoBackFR') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    else if (value.event === 'closedRazorpay') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    else if (value.event === 'paymentFailed') {
+      ecommerce.purchase = {
+        actionField: actionField,
+        products: products
+      }
+    }
+    dl_value.ecommerce = ecommerce;
+  }
+
+  pushToDataLayer(dl_value);
+
+  if (value.event === 'productClick') [
+    pushToDataLayer({
+      event: 'productImpressions',
+      ecommerce: {
+        impressions: products
+      }
+    })
+  ]
+}
