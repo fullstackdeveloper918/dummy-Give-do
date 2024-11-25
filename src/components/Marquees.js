@@ -24,7 +24,7 @@ const obj = [
 ]
 export const Marquees = () => {
   return (
-    <div className='my-40'>
+    <div className=''>
         <Marquee speed={150}>
             {
                 obj.map((item)=>(

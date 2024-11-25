@@ -1,69 +1,96 @@
 import React, { useState } from "react";
 import Slider from "react-slick";
-import '../App.css';
-import image1 from '../images/1st.webp';
-import image2 from '../images/2nd.webp';
-import image3 from '../images/3rd.webp';
-import image4 from '../images/4th.webp';
-import image5 from '../images/5th.webp';
-import image6 from '../images/6th.webp';
+import "../App.css";
+import { bigSlideData, slideData } from "../datas/Info";
+import { Cards } from "./Cards";
 
 function CustomSlide({ image, ...otherProps }) {
   return (
-    <div {...otherProps} className="relative flex justify-center items-center rounded-xl">
-      <img src={image} alt="slider" className="w-full h-full object-cover rounded-lg px-4" />
+    <div
+      {...otherProps}
+      className={` rounded-xl ${
+        otherProps.type === "second"
+          ? "mx-10"
+          : "w-full h-full relative flex justify-center items-center"
+      }`}
+    >
+      <img
+        src={image}
+        alt="slider"
+        className={`${
+          otherProps.type === "second"
+            ? "w-28 h-20"
+            : "w-full h-full object-cover rounded-lg px-4 "
+        }`}
+      />
     </div>
   );
 }
 
-function CustomSlides() {
-
-  const [activeSlide,setActiveSlide] = useState(0);
+function CustomSlides(props) {
+  const [activeSlide, setActiveSlide] = useState(0);
 
   const settings = {
-    dots: true, 
-    infinite: true, 
-    speed: 500, 
-    slidesToShow: 1, 
-    slidesToScroll: 1, 
-    autoplay: true, 
-    autoplaySpeed: 2000, 
-    centerMode: true, 
-    focusOnSelect: true, 
-    centerPadding: '18%', 
-    beforeChange: (current, next) => setActiveSlide(next), 
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: props.type === "first" ? 1 : props.type === "second" ? 3 : 2,
+    slidesToScroll: props.type === "first" ? 1 : 3,
+    autoplay: true,
+    autoplaySpeed: 2000,
+    centerMode: true,
+    focusOnSelect: true,
+    centerPadding: "18%",
+    beforeChange: (current, next) => setActiveSlide(next),
     customPaging: (i) => (
       <div
-        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+        className={`transition-all duration-300 ${
           activeSlide === i ? "bg-red-400" : "bg-gray-400"
-        }`}
+        } ${props.type === "first" ? "w-3 h-3 rounded-full" : "w-6 h-1 my-8"} `}
       ></div>
     ),
-    
   };
 
   return (
-    <div className="slider-container mx-auto px-4 max-w-full">
-      <Slider {...settings}>
-        <div className="relative">
-          <CustomSlide image={image1} />
+    <div>
+      {props.type === "first" ? (
+        <div className="slider-container mx-auto px-4 max-w-full">
+          <Slider {...settings}>
+            {bigSlideData.map((data, index) => (
+              <div key={index} className="relative">
+                <CustomSlide image={data.img} />
+              </div>
+            ))}
+          </Slider>
         </div>
-        <div className="relative">
-          <CustomSlide image={image2} />
+      ) : (
+        props.type === "second" ?
+        <div>
+          <div className="slider-container mx-auto max-w-full my-8">
+            <Slider {...settings}>
+              {slideData.map((data, index) => (
+                <div key={index} className="">
+                  <div className="border shadow-lg bg-gray-50 rounded-xl mx-10 py-8">
+                    <CustomSlide image={data.img} type={props.type} />
+                    <p className="text-center">{data.text}</p>
+                  </div>
+                </div>
+              ))}
+            </Slider>
+          </div>
         </div>
-        <div className="relative">
-          <CustomSlide image={image3} />
+        :
+        <div className="slider-container mx-auto max-w-full my-8">
+            <Slider {...settings}>
+                  {
+                    slideData.filter((item,index)=> index > 4).map((item,index)=>(
+                      <Cards item={item} type="news" />
+                    ))
+                  }
+
+            </Slider>
         </div>
-        <div className="relative">
-          <CustomSlide image={image4} />
-        </div>
-        <div className="relative">
-          <CustomSlide image={image5} />
-        </div>
-        <div className="relative">
-          <CustomSlide image={image6} />
-        </div>
-      </Slider>
+      )}
     </div>
   );
 }
