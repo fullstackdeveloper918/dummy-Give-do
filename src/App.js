@@ -100,7 +100,7 @@ function App() {
       <section className="my-16">
         <div className="container mx-auto w-full flex flex-col items-center justify-center">
           <div className="mt-16">
-               <div className="bg-gray-50 w-96 h-48 rounded-t-full rounded-l-full rounded-r-full rounded-b-xl relative z-10"></div>
+               <div className="bg-gray-50 w-96 h-48 rounded-t-full relative z-10"></div>
               <img src={logo} alt="logo" className="max-w-16 max-h-10 relative left-36 bottom-20 z-20" />
           </div>
           <h1 className="text-5xl text-gray-800 font-bold w-1/2 text-center -mt-[70px] z-20">India's most trusted online donation platform</h1>

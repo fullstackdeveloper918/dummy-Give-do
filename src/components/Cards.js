@@ -22,8 +22,8 @@ export const Cards = (props) => {
       <div
         onMouseEnter={() => handleMouseEnter(index)}
         onMouseLeave={handleMouseLeave}
-        className={`relative rounded-2xl shadow-lg w-96 ${
-          props.type === "monthly" ? "h-[380px]" : "h-[520px]"
+        className={`relative rounded-2xl shadow-lg  ${
+          props.type === "monthly" ? "h-[380px] w-96" : props.type === "support" ? "h-[520px] w-96" : "w-96 mx-3 h-[480px]"
         } overflow-x-hidden hover:transform transition-all hover:scale-105 hover:shadow-xl duration-300 ease-in-out bg-white`}
       >
         <div className="relative ">
@@ -56,6 +56,7 @@ export const Cards = (props) => {
                 </p>
               </>
             ) : (
+              props.type === "support" ?
               <>
                 <p className="pt-4 pb-1 text-xl px-4 font-bold text-black left-2">
                   {head}
@@ -68,6 +69,9 @@ export const Cards = (props) => {
                   <TbUsers size={23} />{" "}
                   <p className="text-black">{donations}</p>
                 </div>
+              </> :
+              <>
+              
               </>
             )}
           </div>

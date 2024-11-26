@@ -19,6 +19,12 @@ import image12 from '../images/ind.jpeg'
 import image13 from '../images/sppd.JPG'
 import image14 from '../images/trust.png'
 import image15 from '../images/ind.jpeg'
+import gammer from '../images/gammer.webp'
+import gammer2 from '../images/gammer2.webp'
+import leader from '../images/leader.webp'
+import leader2 from '../images/leader2.webp'
+import leader3 from '../images/leader3.webp'
+import plantsforindia from '../images/plantsforindia.webp'
 
 export const data = [
     {
@@ -148,5 +154,39 @@ export const bigSlideData = [
       text: "Project Potential"
     }
   ];
+
+
+  export const CardData = [
+    {
+      imag: gammer,
+      text: "Technology in CSR is a Gamer Changer For...",
+      date: "4 April 2023"
+    },
+    {
+      imag: gammer2,
+      text: "Technology in CSR is a Gamer Changer For...",
+      date: "4 April 2023"
+    },
+    {
+      imag: leader,
+      text: "Technology in CSR is a Gamer Changer For...",
+      date: "4 April 2023"
+    },
+    {
+      imag: leader2,
+      text: "Technology in CSR is a Gamer Changer For...",
+      date: "4 April 2023"
+    },
+    {
+      imag: leader3,
+      text: "Technology in CSR is a Gamer Changer For...",
+      date: "4 April 2023"
+    },
+    {
+      imag: plantsforindia,
+      text: "Technology in CSR is a Gamer Changer For...",
+      date: "4 April 2023"
+    },
+  ]
 
 

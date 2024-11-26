@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import Slider from "react-slick";
 import "../App.css";
-import { bigSlideData, slideData } from "../datas/Info";
+import { bigSlideData, CardData, slideData } from "../datas/Info";
 import { Cards } from "./Cards";
+import { SupportCard } from "./SupportCard";
 
 function CustomSlide({ image, ...otherProps }) {
   return (
@@ -34,8 +35,8 @@ function CustomSlides(props) {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: props.type === "first" ? 1 : props.type === "second" ? 3 : 2,
-    slidesToScroll: props.type === "first" ? 1 : 3,
+    slidesToShow: props.type === "first" ? 1 : props.type === "second" ? 3 : 1,
+    slidesToScroll: props.type === "first" ? 1 : props.type === "second" ? 3 : 3,
     autoplay: true,
     autoplaySpeed: 2000,
     centerMode: true,
@@ -82,12 +83,48 @@ function CustomSlides(props) {
         :
         <div className="slider-container mx-auto max-w-full my-8">
             <Slider {...settings}>
-                  {
-                    slideData.filter((item,index)=> index > 4).map((item,index)=>(
-                      <Cards item={item} type="news" />
-                    ))
-                  }
+                 <div className="">
+                    <div className="">
+                    {
+                        slideData.filter((item,index)=> index > 6).map((item,index)=>(
+                          <div className="">
+                            <Cards item={item} type="news" />
+                          </div>
+                        ))
+                      }
+                    </div>
+                      <div className="">
+                      {
+                        CardData.filter((item,index)=> index < 3).map((item,index)=>(
+                          <div key={index} className="">
+                            <SupportCard item={item}/>
+                          </div>
+                        ))
+                      }
+                      </div>
+                 </div>
 
+                 <div className="flex">
+                        <div className="">
+                        {
+                            slideData.filter((item,index)=> index < 2).map((item,index)=>(
+                            <div className=""> 
+                              <Cards item={item} type="news" />
+                            </div>
+                            ))
+                          }
+                        
+                        </div>
+                          <div>
+                          {
+                            CardData.filter((item,index)=> index > 2).map((item,index)=>(
+                              <div key={index} className="">
+                                <SupportCard item={item}/>
+                              </div>
+                            ))
+                          }
+                          </div>
+                 </div>
             </Slider>
         </div>
       )}
